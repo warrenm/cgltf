@@ -252,6 +252,15 @@ typedef enum cgltf_light_type {
 	cgltf_light_type_max_enum
 } cgltf_light_type;
 
+typedef enum cgltf_implicit_shape_type {
+	cgltf_implicit_shape_type_invalid,
+	cgltf_implicit_shape_type_sphere,
+	cgltf_implicit_shape_type_box,
+	cgltf_implicit_shape_type_cylinder,
+	cgltf_implicit_shape_type_capsule,
+	cgltf_implicit_shape_type_max_enum
+} cgltf_implicit_shape_type;
+
 typedef enum cgltf_data_free_method {
 	cgltf_data_free_method_none,
 	cgltf_data_free_method_file_release,
@@ -685,6 +694,44 @@ typedef struct cgltf_light {
 	cgltf_extras extras;
 } cgltf_light;
 
+typedef struct cgltf_implicit_shape_sphere
+{
+	cgltf_float radius;
+} cgltf_implicit_shape_sphere;
+
+typedef struct cgltf_implicit_shape_box
+{
+	cgltf_float size[3];
+} cgltf_implicit_shape_box;
+
+typedef struct cgltf_implicit_shape_cylinder
+{
+	cgltf_float height;
+	cgltf_float radius_top;
+	cgltf_float radius_bottom;
+} cgltf_implicit_shape_cylinder;
+
+typedef struct cgltf_implicit_shape_capsule
+{
+	cgltf_float height;
+	cgltf_float radius_top;
+	cgltf_float radius_bottom;
+} cgltf_implicit_shape_capsule;
+
+typedef struct cgltf_implicit_shape
+{
+	cgltf_implicit_shape_type type;
+	union {
+		cgltf_implicit_shape_sphere sphere;
+		cgltf_implicit_shape_box box;
+		cgltf_implicit_shape_cylinder cylinder;
+		cgltf_implicit_shape_capsule capsule;
+	} data;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_implicit_shape;
+
 struct cgltf_node {
 	char* name;
 	cgltf_node* parent;
@@ -819,6 +866,9 @@ typedef struct cgltf_data
 	cgltf_material_variant* variants;
 	cgltf_size variants_count;
 
+	cgltf_implicit_shape* implicit_shapes;
+	cgltf_size implicit_shapes_count;
+
 	cgltf_extras extras;
 
 	cgltf_size data_extensions_count;
@@ -892,6 +942,7 @@ cgltf_size cgltf_accessor_index(const cgltf_data* data, const cgltf_accessor* ob
 cgltf_size cgltf_buffer_view_index(const cgltf_data* data, const cgltf_buffer_view* object);
 cgltf_size cgltf_buffer_index(const cgltf_data* data, const cgltf_buffer* object);
 cgltf_size cgltf_image_index(const cgltf_data* data, const cgltf_image* object);
+cgltf_size cgltf_implicit_shape_index(const cgltf_data* data, const cgltf_implicit_shape* object);
 cgltf_size cgltf_texture_index(const cgltf_data* data, const cgltf_texture* object);
 cgltf_size cgltf_sampler_index(const cgltf_data* data, const cgltf_sampler* object);
 cgltf_size cgltf_skin_index(const cgltf_data* data, const cgltf_skin* object);
@@ -1983,6 +2034,8 @@ void cgltf_free(cgltf_data* data)
 
 	data->memory.free_func(data->memory.user_data, data->images);
 
+	data->memory.free_func(data->memory.user_data, data->implicit_shapes);
+
 	for (cgltf_size i = 0; i < data->textures_count; ++i)
 	{
 		data->memory.free_func(data->memory.user_data, data->textures[i].name);
@@ -2569,6 +2622,12 @@ cgltf_size cgltf_image_index(const cgltf_data* data, const cgltf_image* object)
 {
 	assert(object && (cgltf_size)(object - data->images) < data->images_count);
 	return (cgltf_size)(object - data->images);
+}
+
+cgltf_size cgltf_implicit_shape_index(const cgltf_data* data, const cgltf_implicit_shape* object)
+{
+	assert(object && (cgltf_size)(object - data->implicit_shapes) < data->implicit_shapes_count);
+	return (cgltf_size)(object - data->implicit_shapes);
 }
 
 cgltf_size cgltf_texture_index(const cgltf_data* data, const cgltf_texture* object)
@@ -6250,6 +6309,270 @@ static int cgltf_parse_json_variants(cgltf_options* options, jsmntok_t const* to
 	return i;
 }
 
+static int cgltf_parse_json_implicit_shape(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_implicit_shape* out_shape)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	cgltf_bool has_shape_properties = 0;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "type") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);
+
+			if (cgltf_json_strcmp(tokens + i, json_chunk, "sphere") == 0)
+			{
+				out_shape->type = cgltf_implicit_shape_type_sphere;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "box") == 0)
+			{
+				out_shape->type = cgltf_implicit_shape_type_box;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "cylinder") == 0)
+			{
+				out_shape->type = cgltf_implicit_shape_type_cylinder;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "capsule") == 0)
+			{
+				out_shape->type = cgltf_implicit_shape_type_capsule;
+			}
+
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "sphere") == 0)
+		{
+			has_shape_properties = 1;
+			out_shape->data.sphere = (cgltf_implicit_shape_sphere){ 0.5f };
+
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+			int data_size = tokens[i].size;
+			++i;
+
+			for (int k = 0; k < data_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens + i, json_chunk, "radius") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.sphere.radius = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i + 1);
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "box") == 0)
+		{
+			has_shape_properties = 1;
+			out_shape->data.box = (cgltf_implicit_shape_box){ { 1.0f, 1.0f, 1.0f } };
+
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+			int data_size = tokens[i].size;
+			++i;
+
+			for (int k = 0; k < data_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens+i, json_chunk, "size") == 0)
+				{
+					i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_shape->data.box.size, 3);
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i + 1);
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "cylinder") == 0)
+		{
+			has_shape_properties = 1;
+			out_shape->data.cylinder.height = 0.5f;
+			out_shape->data.cylinder.radius_bottom = 0.5f;
+			out_shape->data.cylinder.radius_top = 0.5f;
+
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+			int data_size = tokens[i].size;
+			++i;
+
+			for (int k = 0; k < data_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens+i, json_chunk, "height") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.cylinder.height = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else if (cgltf_json_strcmp(tokens+i, json_chunk, "radiusBottom") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.cylinder.radius_bottom = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "radiusTop") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.cylinder.radius_top = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i + 1);
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "capsule") == 0)
+		{
+			has_shape_properties = 1;
+			out_shape->data.capsule.height = 0.5f;
+			out_shape->data.capsule.radius_bottom = 0.5f;
+			out_shape->data.capsule.radius_top = 0.5f;
+
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+			int data_size = tokens[i].size;
+			++i;
+
+			for (int k = 0; k < data_size; ++k)
+			{
+				CGLTF_CHECK_KEY(tokens[i]);
+
+				if (cgltf_json_strcmp(tokens+i, json_chunk, "height") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.capsule.height = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "radiusBottom") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.capsule.radius_bottom = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "radiusTop") == 0)
+				{
+					++i;
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+					out_shape->data.capsule.radius_top = cgltf_json_to_float(tokens + i, json_chunk);
+					++i;
+				}
+				else
+				{
+					i = cgltf_skip_json(tokens, i + 1);
+				}
+
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_shape->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_shape->extensions_count, &out_shape->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (!has_shape_properties) {
+			switch (out_shape->type) {
+				case cgltf_implicit_shape_type_sphere:
+					out_shape->data.sphere.radius = 0.5f;
+					break;
+				case cgltf_implicit_shape_type_box:
+					out_shape->data.box.size[0] = 1.0f;
+					out_shape->data.box.size[1] = 1.0f;
+					out_shape->data.box.size[2] = 1.0f;
+					break;
+				case cgltf_implicit_shape_type_cylinder:
+					out_shape->data.cylinder.height = 0.5f;
+					out_shape->data.cylinder.radius_bottom = 0.5f;
+					out_shape->data.cylinder.radius_top = 0.5f;
+					break;
+				case cgltf_implicit_shape_type_capsule:
+					out_shape->data.capsule.height = 0.5f;
+					out_shape->data.capsule.radius_bottom = 0.5f;
+					out_shape->data.capsule.radius_top = 0.5f;
+					break;
+				default:
+					break;
+			}
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_implicit_shapes(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
+{
+	i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_implicit_shape), (void**)&out_data->implicit_shapes, &out_data->implicit_shapes_count);
+	if (i < 0)
+	{
+		return i;
+	}
+
+	for (cgltf_size j = 0; j < out_data->implicit_shapes_count; ++j)
+	{
+		i = cgltf_parse_json_implicit_shape(options, tokens, i, json_chunk, &out_data->implicit_shapes[j]);
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+	return i;
+}
+
 static int cgltf_parse_json_asset(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_asset* out_asset)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -6506,6 +6829,34 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 						if (cgltf_json_strcmp(tokens + i, json_chunk, "variants") == 0)
 						{
 							i = cgltf_parse_json_variants(options, tokens, i + 1, json_chunk, out_data);
+						}
+						else
+						{
+							i = cgltf_skip_json(tokens, i + 1);
+						}
+
+						if (i < 0)
+						{
+							return i;
+						}
+					}
+				}
+				else if (cgltf_json_strcmp(tokens+i, json_chunk, "KHR_implicit_shapes") == 0)
+				{
+					++i;
+
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+					int data_size = tokens[i].size;
+					++i;
+
+					for (int m = 0; m < data_size; ++m)
+					{
+						CGLTF_CHECK_KEY(tokens[i]);
+
+						if (cgltf_json_strcmp(tokens + i, json_chunk, "shapes") == 0)
+						{
+							i = cgltf_parse_json_implicit_shapes(options, tokens, i + 1, json_chunk, out_data);
 						}
 						else
 						{

@@ -89,6 +89,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_MATERIALS_DISPERSION (1 << 17)
 #define CGLTF_EXTENSION_FLAG_TEXTURE_WEBP          (1 << 18)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_DIFFUSE_TRANSMISSION (1 << 19)
+#define CGLTF_EXTENSION_FLAG_IMPLICIT_SHAPES        (1 << 20)
 
 typedef struct {
 	char* buffer;
@@ -435,6 +436,18 @@ static const char* cgltf_str_from_light_type(cgltf_light_type light_type)
 		case cgltf_light_type_spot: return "spot";
 		default: return NULL;
 	}
+}
+
+static const char* cgltf_str_from_implicit_shape_type(cgltf_implicit_shape_type shape_type)
+{
+    switch (shape_type)
+    {
+        case cgltf_implicit_shape_type_box: return "box";
+        case cgltf_implicit_shape_type_sphere: return "sphere";
+        case cgltf_implicit_shape_type_cylinder: return "cylinder";
+        case cgltf_implicit_shape_type_capsule: return "capsule";
+        default: return NULL;
+    }
 }
 
 static void cgltf_write_texture_transform(cgltf_write_context* context, const cgltf_texture_transform* transform)
@@ -1201,6 +1214,44 @@ static void cgltf_write_variant(cgltf_write_context* context, const cgltf_materi
 	cgltf_write_line(context, "}");
 }
 
+static void cgltf_write_implicit_shape(cgltf_write_context* context, const cgltf_implicit_shape *shape)
+{
+	context->extension_flags |= CGLTF_EXTENSION_FLAG_IMPLICIT_SHAPES;
+
+	cgltf_write_line(context, "{");
+	cgltf_write_strprop(context, "type", cgltf_str_from_implicit_shape_type(shape->type));
+	switch (shape->type) {
+		case cgltf_implicit_shape_type_box:
+			cgltf_write_line(context, "\"box\": {");
+			cgltf_write_floatarrayprop(context, "size", shape->data.box.size, 3);
+			cgltf_write_line(context, "}");
+			break;
+		case cgltf_implicit_shape_type_sphere:
+			cgltf_write_line(context, "\"sphere\": {");
+			cgltf_write_floatprop(context, "radius", shape->data.sphere.radius, 0.5f);
+			cgltf_write_line(context, "}");
+			break;
+		case cgltf_implicit_shape_type_cylinder:
+			cgltf_write_line(context, "\"cylinder\": {");
+			cgltf_write_floatprop(context, "height", shape->data.cylinder.height, 0.5f);
+			cgltf_write_floatprop(context, "radiusTop", shape->data.cylinder.radius_top, 0.25f);
+			cgltf_write_floatprop(context, "radiusBottom", shape->data.cylinder.radius_bottom, 0.25f);
+			cgltf_write_line(context, "}");
+			break;
+		case cgltf_implicit_shape_type_capsule:
+			cgltf_write_line(context, "\"capsule\": {");
+			cgltf_write_floatprop(context, "height", shape->data.capsule.height, 0.5f);
+			cgltf_write_floatprop(context, "radiusTop", shape->data.capsule.radius_top, 0.25f);
+			cgltf_write_floatprop(context, "radiusBottom", shape->data.capsule.radius_bottom, 0.25f);
+			cgltf_write_line(context, "}");
+			break;
+		default:
+			break;
+	}
+	cgltf_write_extras(context, &shape->extras);
+	cgltf_write_line(context, "}");
+}
+
 static void cgltf_write_glb(FILE* file, const void* json_buf, const cgltf_size json_size, const void* bin_buf, const cgltf_size bin_size)
 {
 	char header[GlbHeaderSize];
@@ -1329,6 +1380,9 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_DISPERSION) {
 		cgltf_write_stritem(context, "KHR_materials_dispersion");
 	}
+    if (extension_flags & CGLTF_EXTENSION_FLAG_IMPLICIT_SHAPES) {
+        cgltf_write_stritem(context, "KHR_implicit_shapes");
+    }
 }
 
 cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size size, const cgltf_data* data)
@@ -1508,6 +1562,18 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 			for (cgltf_size i = 0; i < data->variants_count; ++i)
 			{
 				cgltf_write_variant(context, data->variants + i);
+			}
+			cgltf_write_line(context, "]");
+			cgltf_write_line(context, "}");
+		}
+
+		if (data->implicit_shapes_count)
+		{
+			cgltf_write_line(context, "\"KHR_implicit_shapes\": {");
+			cgltf_write_line(context, "\"shapes\": [");
+			for (cgltf_size i = 0; i < data->implicit_shapes_count; ++i)
+			{
+				cgltf_write_implicit_shape(context, data->implicit_shapes + i);
 			}
 			cgltf_write_line(context, "]");
 			cgltf_write_line(context, "}");
