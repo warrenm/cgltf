@@ -732,6 +732,159 @@ typedef struct cgltf_implicit_shape
 	cgltf_extension* extensions;
 } cgltf_implicit_shape;
 
+typedef enum cgltf_physics_rigid_body_axis {
+	cgltf_physics_rigid_body_axis_x = 0,
+	cgltf_physics_rigid_body_axis_y = 1,
+	cgltf_physics_rigid_body_axis_z = 2
+} cgltf_physics_rigid_body_axis;
+
+typedef enum cgltf_physics_rigid_body_joint_drive_type {
+	cgltf_physics_rigid_body_joint_drive_type_invalid,
+	cgltf_physics_rigid_body_joint_drive_type_linear,
+	cgltf_physics_rigid_body_joint_drive_type_angular,
+	cgltf_physics_rigid_body_joint_drive_type_max_enum
+} cgltf_physics_rigid_body_joint_drive_type;
+
+typedef enum cgltf_physics_rigid_body_joint_drive_mode {
+	cgltf_physics_rigid_body_joint_drive_mode_invalid,
+	cgltf_physics_rigid_body_joint_drive_mode_force,
+	cgltf_physics_rigid_body_joint_drive_mode_acceleration,
+	cgltf_physics_rigid_body_joint_drive_mode_max_enum
+} cgltf_physics_rigid_body_joint_drive_mode;
+
+typedef enum cgltf_physics_rigid_body_combine {
+	cgltf_physics_rigid_body_combine_invalid,
+	cgltf_physics_rigid_body_combine_average,
+	cgltf_physics_rigid_body_combine_minimum,
+	cgltf_physics_rigid_body_combine_maximum,
+	cgltf_physics_rigid_body_combine_multiply,
+	cgltf_physics_rigid_body_combine_max_enum
+} cgltf_physics_rigid_body_combine;
+
+typedef struct cgltf_physics_rigid_body_collider_geometry {
+	cgltf_bool convex_hull;
+	cgltf_implicit_shape* shape;
+	cgltf_node* node;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_collider_geometry;
+
+typedef struct cgltf_physics_rigid_body_material {
+	cgltf_float static_friction;
+	cgltf_float dynamic_friction;
+	cgltf_float restitution;
+	cgltf_physics_rigid_body_combine friction_combine;
+	cgltf_physics_rigid_body_combine restitution_combine;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_material;
+
+typedef struct cgltf_physics_rigid_body_collision_filter {
+	char **collision_systems;
+	cgltf_size collision_systems_count;
+	char **collide_with_systems;
+	cgltf_size collide_with_systems_count;
+	char **not_collide_with_systems;
+	cgltf_size not_collide_with_systems_count;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_collision_filter;
+
+typedef struct cgltf_physics_rigid_body_collider {
+	cgltf_physics_rigid_body_collider_geometry geometry;
+	cgltf_physics_rigid_body_material* physics_material;
+	cgltf_physics_rigid_body_collision_filter* collision_filter;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_collider;
+
+typedef struct cgltf_physics_rigid_body_joint_limit {
+	cgltf_float min;
+	cgltf_float max;
+	cgltf_float stiffness;
+	cgltf_float damping;
+	cgltf_physics_rigid_body_axis *linear_axes;
+	cgltf_size linear_axes_count;
+	cgltf_physics_rigid_body_axis *angular_axes;
+	cgltf_size angular_axes_count;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_joint_limit;
+
+typedef struct cgltf_physics_rigid_body_joint_drive {
+	cgltf_physics_rigid_body_joint_drive_type type;
+	cgltf_physics_rigid_body_joint_drive_mode mode;
+	cgltf_physics_rigid_body_axis axis;
+	cgltf_bool has_max_force;
+	cgltf_float max_force;
+	cgltf_float position_target;
+	cgltf_float velocity_target;
+	cgltf_float stiffness;
+	cgltf_float damping;
+} cgltf_physics_rigid_body_joint_drive;
+
+typedef struct cgltf_physics_rigid_body_joint {
+	cgltf_physics_rigid_body_joint_limit* limits;
+	cgltf_size limits_count;
+	cgltf_physics_rigid_body_joint_drive* drives;
+	cgltf_size drives_count;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_joint;
+
+typedef struct cgltf_physics_rigid_body_motion {
+	cgltf_bool is_kinematic;
+	cgltf_float mass;
+	cgltf_float center_of_mass[3];
+	cgltf_float inertia_diagonal[3];
+	cgltf_float inertia_orientation[4];
+	cgltf_float linear_velocity[3];
+	cgltf_float angular_velocity[3];
+	cgltf_float gravity_factor;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_motion;
+
+typedef struct cgltf_physics_rigid_body_trigger {
+	cgltf_bool has_geometry;
+	cgltf_physics_rigid_body_collider_geometry geometry;
+	cgltf_node** nodes;
+	cgltf_size nodes_count;
+	cgltf_physics_rigid_body_collision_filter* collision_filter;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_trigger;
+
+typedef struct cgltf_physics_rigid_body_joint_connection {
+	cgltf_node* connected_node;
+	cgltf_physics_rigid_body_joint* joint;
+	cgltf_bool enable_collision;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body_joint_connection;
+
+typedef struct cgltf_physics_rigid_body {
+	cgltf_physics_rigid_body_motion motion;
+	cgltf_bool has_collider;
+	cgltf_physics_rigid_body_collider collider;
+	cgltf_bool has_trigger;
+	cgltf_physics_rigid_body_trigger trigger;
+	cgltf_bool has_joint;
+	cgltf_physics_rigid_body_joint_connection joint;
+	cgltf_extras extras;
+	cgltf_size extensions_count;
+	cgltf_extension* extensions;
+} cgltf_physics_rigid_body;
+
 struct cgltf_node {
 	char* name;
 	cgltf_node* parent;
@@ -754,6 +907,8 @@ struct cgltf_node {
 	cgltf_extras extras;
 	cgltf_bool has_mesh_gpu_instancing;
 	cgltf_mesh_gpu_instancing mesh_gpu_instancing;
+	cgltf_bool has_physics_rigid_body;
+	cgltf_physics_rigid_body physics_rigid_body;
 	cgltf_size extensions_count;
 	cgltf_extension* extensions;
 };
@@ -868,6 +1023,15 @@ typedef struct cgltf_data
 
 	cgltf_implicit_shape* implicit_shapes;
 	cgltf_size implicit_shapes_count;
+
+	cgltf_physics_rigid_body_material *physics_rigid_body_materials;
+	cgltf_size physics_rigid_body_materials_count;
+
+	cgltf_physics_rigid_body_collision_filter *physics_rigid_body_collision_filters;
+	cgltf_size physics_rigid_body_collision_filters_count;
+
+	cgltf_physics_rigid_body_joint *physics_rigid_body_joints;
+	cgltf_size physics_rigid_body_joints_count;
 
 	cgltf_extras extras;
 
@@ -2114,6 +2278,51 @@ void cgltf_free(cgltf_data* data)
 		cgltf_free_extensions(data, data->nodes[i].extensions, data->nodes[i].extensions_count);
 		cgltf_free_extras(data, &data->nodes[i].extras);
 	}
+
+	for (cgltf_size i = 0; i < data->physics_rigid_body_materials_count; ++i)
+	{
+		cgltf_free_extensions(data, data->physics_rigid_body_materials[i].extensions, data->physics_rigid_body_materials[i].extensions_count);
+		cgltf_free_extras(data, &data->physics_rigid_body_materials[i].extras);
+	}
+
+	data->memory.free_func(data->memory.user_data, data->physics_rigid_body_materials);
+
+	for (cgltf_size i = 0; i < data->physics_rigid_body_collision_filters_count; ++i)
+	{
+		for (cgltf_size j = 0; j < data->physics_rigid_body_collision_filters[i].collision_systems_count; ++j)
+		{
+			data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].collision_systems[j]);
+		}
+		data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].collision_systems);
+		for (cgltf_size j = 0; j < data->physics_rigid_body_collision_filters[i].collide_with_systems_count; ++j)
+		{
+			data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].collide_with_systems[j]);
+		}
+		data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].collide_with_systems);
+		for (cgltf_size j = 0; j < data->physics_rigid_body_collision_filters[i].not_collide_with_systems_count; ++j)
+		{
+			data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].not_collide_with_systems[j]);
+		}
+		data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters[i].not_collide_with_systems);
+		cgltf_free_extensions(data, data->physics_rigid_body_collision_filters[i].extensions, data->physics_rigid_body_collision_filters[i].extensions_count);
+		cgltf_free_extras(data, &data->physics_rigid_body_collision_filters[i].extras);
+	}
+
+	data->memory.free_func(data->memory.user_data, data->physics_rigid_body_collision_filters);
+
+	for (cgltf_size i = 0; i < data->physics_rigid_body_joints_count; ++i)
+	{
+		for (cgltf_size j = 0; j < data->physics_rigid_body_joints[i].limits_count; ++j) {
+			data->memory.free_func(data->memory.user_data, data->physics_rigid_body_joints[i].limits[j].linear_axes);
+			data->memory.free_func(data->memory.user_data, data->physics_rigid_body_joints[i].limits[j].angular_axes);
+		}
+		data->memory.free_func(data->memory.user_data, data->physics_rigid_body_joints[i].limits);
+		data->memory.free_func(data->memory.user_data, data->physics_rigid_body_joints[i].drives);
+		cgltf_free_extensions(data, data->physics_rigid_body_joints[i].extensions, data->physics_rigid_body_joints[i].extensions_count);
+		cgltf_free_extras(data, &data->physics_rigid_body_joints[i].extras);
+	}
+
+	data->memory.free_func(data->memory.user_data, data->physics_rigid_body_joints);
 
 	data->memory.free_func(data->memory.user_data, data->nodes);
 
@@ -5745,6 +5954,281 @@ static int cgltf_parse_json_lights(cgltf_options* options, jsmntok_t const* toke
 	return i;
 }
 
+static int cgltf_parse_json_physics_rigid_body_motion(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_motion* out_motion)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "isKinematic") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_motion->is_kinematic = cgltf_json_to_bool(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "mass") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_motion->mass = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "centerOfMass") == 0)
+		{
+			i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_motion->center_of_mass, 3);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "inertiaDiagonal") == 0)
+		{
+			i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_motion->inertia_diagonal, 3);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "inertiaOrientation") == 0)
+		{
+			i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_motion->inertia_orientation, 4);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "linearVelocity") == 0)
+		{
+			i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_motion->linear_velocity, 3);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "angularVelocity") == 0)
+		{
+			i = cgltf_parse_json_float_array(tokens, i + 1, json_chunk, out_motion->angular_velocity, 3);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "gravityFactor") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_motion->gravity_factor = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_motion->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_motion->extensions_count, &out_motion->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i+1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_collider_geometry(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_collider_geometry* out_geometry)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "convexHull") == 0)
+		{
+			++i;
+			out_geometry->convex_hull = cgltf_json_to_bool(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "shape") == 0)
+		{
+			++i;
+			out_geometry->shape = CGLTF_PTRINDEX(cgltf_implicit_shape, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "node") == 0)
+		{
+			++i;
+			out_geometry->node = CGLTF_PTRINDEX(cgltf_node, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_geometry->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_geometry->extensions_count, &out_geometry->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i+1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_collider(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_collider* out_collider)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "geometry") == 0)
+		{
+			i = cgltf_parse_json_physics_rigid_body_collider_geometry(options, tokens, i + 1, json_chunk, &out_collider->geometry);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "physicsMaterial") == 0)
+		{
+			++i;
+			out_collider->physics_material = CGLTF_PTRINDEX(cgltf_physics_rigid_body_material, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "collisionFilter") == 0)
+		{
+			++i;
+			out_collider->collision_filter = CGLTF_PTRINDEX(cgltf_physics_rigid_body_collision_filter, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_collider->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_collider->extensions_count, &out_collider->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i+1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_trigger(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_trigger* out_trigger)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "geometry") == 0)
+		{
+			out_trigger->has_geometry = 1;
+			i = cgltf_parse_json_physics_rigid_body_collider_geometry(options, tokens, i + 1, json_chunk, &out_trigger->geometry);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "nodes") == 0)
+		{
+			i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_node*), (void**)&out_trigger->nodes, &out_trigger->nodes_count);
+			if (i < 0)
+			{
+				return i;
+			}
+
+			for (cgltf_size k = 0; k < out_trigger->nodes_count; ++k)
+			{
+				out_trigger->nodes[k] = CGLTF_PTRINDEX(cgltf_node, cgltf_json_to_int(tokens + i, json_chunk));
+				++i;
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "collisionFilter") == 0)
+		{
+			++i;
+			out_trigger->collision_filter = CGLTF_PTRINDEX(cgltf_physics_rigid_body_collision_filter, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_trigger->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_trigger->extensions_count, &out_trigger->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i+1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_joint_connection(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_joint_connection* out_joint)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "connectedNode") == 0)
+		{
+			++i;
+			out_joint->connected_node = CGLTF_PTRINDEX(cgltf_node, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "joint") == 0)
+		{
+			++i;
+			out_joint->joint = CGLTF_PTRINDEX(cgltf_physics_rigid_body_joint, cgltf_json_to_int(tokens + i, json_chunk));
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "enableCollision") == 0)
+		{
+			++i;
+			out_joint->enable_collision = cgltf_json_to_bool(tokens + i, json_chunk);
+			++i;
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
 static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_node* out_node)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -5898,6 +6382,50 @@ static int cgltf_parse_json_node(cgltf_options* options, jsmntok_t const* tokens
 				{
 					out_node->has_mesh_gpu_instancing = 1;
 					i = cgltf_parse_json_mesh_gpu_instancing(options, tokens, i + 1, json_chunk, &out_node->mesh_gpu_instancing);
+				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "KHR_physics_rigid_bodies") == 0)
+				{
+					++i;
+
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+					out_node->has_physics_rigid_body = 1;
+
+					int data_size = tokens[i].size;
+					++i;
+
+					for (int m = 0; m < data_size; ++m)
+					{
+						CGLTF_CHECK_KEY(tokens[i]);
+
+						if (cgltf_json_strcmp(tokens + i, json_chunk, "motion") == 0)
+						{
+							i = cgltf_parse_json_physics_rigid_body_motion(options, tokens, i + 1, json_chunk, &out_node->physics_rigid_body.motion);
+						}
+						else if (cgltf_json_strcmp(tokens + i, json_chunk, "collider") == 0)
+						{
+							out_node->physics_rigid_body.has_collider = 1;
+							i = cgltf_parse_json_physics_rigid_body_collider(options, tokens, i + 1, json_chunk, &out_node->physics_rigid_body.collider);
+						}
+						else if (cgltf_json_strcmp(tokens + i, json_chunk, "trigger") == 0)
+						{
+							out_node->physics_rigid_body.has_trigger = 1;
+							i = cgltf_parse_json_physics_rigid_body_trigger(options, tokens, i + 1, json_chunk, &out_node->physics_rigid_body.trigger);
+						}
+						else if (cgltf_json_strcmp(tokens + i, json_chunk, "joint") == 0)
+						{
+							out_node->physics_rigid_body.has_joint = 1;
+							i = cgltf_parse_json_physics_rigid_body_joint_connection(options, tokens, i + 1, json_chunk, &out_node->physics_rigid_body.joint);
+						}
+						else
+						{
+							i = cgltf_skip_json(tokens, i + 1);
+						}
+
+						if (i < 0)
+						{
+							return i;
+						}
+					}
 				}
 				else
 				{
@@ -6573,6 +7101,468 @@ static int cgltf_parse_json_implicit_shapes(cgltf_options* options, jsmntok_t co
 	return i;
 }
 
+static int cgltf_parse_json_physics_rigid_body_material(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_material *out_material)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	out_material->static_friction = 0.6f;
+	out_material->dynamic_friction = 0.6f;
+	// FIXME: These defaults aren't specified by the extension spec, but we need something valid.
+	out_material->friction_combine = cgltf_physics_rigid_body_combine_maximum;
+	out_material->restitution_combine = cgltf_physics_rigid_body_combine_minimum;
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "staticFriction") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_material->static_friction = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "dynamicFriction") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_material->dynamic_friction = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "restitution") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_material->restitution = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "frictionCombine") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);
+
+			if (cgltf_json_strcmp(tokens + i, json_chunk, "average") == 0)
+			{
+				out_material->friction_combine = cgltf_physics_rigid_body_combine_average;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "minimum") == 0)
+			{
+				out_material->friction_combine = cgltf_physics_rigid_body_combine_minimum;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "maximum") == 0)
+			{
+				out_material->friction_combine = cgltf_physics_rigid_body_combine_maximum;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "multiply") == 0)
+			{
+				out_material->friction_combine = cgltf_physics_rigid_body_combine_multiply;
+			}
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "restitutionCombine") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);
+
+			if (cgltf_json_strcmp(tokens + i, json_chunk, "average") == 0)
+			{
+				out_material->restitution_combine = cgltf_physics_rigid_body_combine_average;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "minimum") == 0)
+			{
+				out_material->restitution_combine = cgltf_physics_rigid_body_combine_minimum;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "maximum") == 0)
+			{
+				out_material->restitution_combine = cgltf_physics_rigid_body_combine_maximum;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "multiply") == 0)
+			{
+				out_material->restitution_combine = cgltf_physics_rigid_body_combine_multiply;
+			}
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_material->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_material->extensions_count, &out_material->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_materials(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
+{
+	i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_physics_rigid_body_material), (void**)&out_data->physics_rigid_body_materials, &out_data->physics_rigid_body_materials_count);
+	if (i < 0)
+	{
+		return i;
+	}
+
+	for (cgltf_size j = 0; j < out_data->physics_rigid_body_materials_count; ++j)
+	{
+		i = cgltf_parse_json_physics_rigid_body_material(options, tokens, i, json_chunk, &out_data->physics_rigid_body_materials[j]);
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_collision_filter(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_collision_filter *out_filter)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "collisionSystems") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+			i = cgltf_parse_json_string_array(options, tokens, i, json_chunk, &out_filter->collision_systems, &out_filter->collision_systems_count);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "collideWithSystems") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+			i = cgltf_parse_json_string_array(options, tokens, i, json_chunk, &out_filter->collide_with_systems, &out_filter->collide_with_systems_count);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "notCollideWithSystems") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
+			i = cgltf_parse_json_string_array(options, tokens, i, json_chunk, &out_filter->not_collide_with_systems, &out_filter->not_collide_with_systems_count);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_filter->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_filter->extensions_count, &out_filter->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_collision_filters(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
+{
+	i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_physics_rigid_body_collision_filter), (void**)&out_data->physics_rigid_body_collision_filters, &out_data->physics_rigid_body_collision_filters_count);
+	if (i < 0)
+	{
+		return i;
+	}
+
+	for (cgltf_size j = 0; j < out_data->physics_rigid_body_collision_filters_count; ++j)
+	{
+		i = cgltf_parse_json_physics_rigid_body_collision_filter(options, tokens, i, json_chunk, &out_data->physics_rigid_body_collision_filters[j]);
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_joint_limit(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_joint_limit *out_limit)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "min") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_limit->min = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "max") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_limit->max = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "stiffness") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_limit->stiffness = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "damping") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_limit->damping = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "linearAxes") == 0)
+		{
+			i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_physics_rigid_body_axis), (void**)&out_limit->linear_axes, &out_limit->linear_axes_count);
+			if (i < 0)
+			{
+				return i;
+			}
+
+			for (cgltf_size k = 0; k < out_limit->linear_axes_count; ++k)
+			{
+				out_limit->linear_axes[k] = (cgltf_physics_rigid_body_axis)cgltf_json_to_int(tokens + i, json_chunk);
+				++i;
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "angularAxes") == 0)
+		{
+			i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_physics_rigid_body_axis), (void**)&out_limit->angular_axes, &out_limit->angular_axes_count);
+			if (i < 0)
+			{
+				return i;
+			}
+
+			for (cgltf_size k = 0; k < out_limit->angular_axes_count; ++k)
+			{
+				out_limit->angular_axes[k] = (cgltf_physics_rigid_body_axis)cgltf_json_to_int(tokens + i, json_chunk);
+				++i;
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_limit->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_limit->extensions_count, &out_limit->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_joint_drive(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_joint_drive *out_drive)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "type") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);
+			if (cgltf_json_strcmp(tokens + i, json_chunk, "linear") == 0) {
+				out_drive->type = cgltf_physics_rigid_body_joint_drive_type_linear;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "angular") == 0) {
+				out_drive->type = cgltf_physics_rigid_body_joint_drive_type_angular;
+			}
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "mode") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_STRING);
+			if (cgltf_json_strcmp(tokens + i, json_chunk, "force") == 0) {
+				out_drive->mode = cgltf_physics_rigid_body_joint_drive_mode_force;
+			}
+			else if (cgltf_json_strcmp(tokens + i, json_chunk, "acceleration") == 0) {
+				out_drive->mode = cgltf_physics_rigid_body_joint_drive_mode_acceleration;
+			}
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "axis") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->axis = (cgltf_physics_rigid_body_axis)cgltf_json_to_int(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "maxForce") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->has_max_force = 1;
+			out_drive->max_force = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "positionTarget") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->position_target = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "velocityTarget") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->velocity_target = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "stiffness") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->stiffness = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "damping") == 0)
+		{
+			++i;
+			CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_PRIMITIVE);
+			out_drive->damping = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_joint(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_physics_rigid_body_joint *out_joint)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+	int size = tokens[i].size;
+	++i;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "limits") == 0)
+		{
+			i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_physics_rigid_body_joint_limit), (void**)&out_joint->limits, &out_joint->limits_count);
+			if (i < 0)
+			{
+				return i;
+			}
+
+			for (cgltf_size k = 0; k < out_joint->limits_count; ++k)
+			{
+				i = cgltf_parse_json_physics_rigid_body_joint_limit(options, tokens, i, json_chunk, &out_joint->limits[k]);
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "drives") == 0)
+		{
+			i = cgltf_parse_json_array(options, tokens, i + 1, json_chunk, sizeof(cgltf_physics_rigid_body_joint_drive), (void**)&out_joint->drives, &out_joint->drives_count);
+			if (i < 0)
+			{
+				return i;
+			}
+
+			for (cgltf_size k = 0; k < out_joint->drives_count; ++k)
+			{
+				i = cgltf_parse_json_physics_rigid_body_joint_drive(options, tokens, i, json_chunk, &out_joint->drives[k]);
+				if (i < 0)
+				{
+					return i;
+				}
+			}
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
+		{
+			i = cgltf_parse_json_extras(options, tokens, i + 1, json_chunk, &out_joint->extras);
+		}
+		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extensions") == 0)
+		{
+			i = cgltf_parse_json_unprocessed_extensions(options, tokens, i, json_chunk, &out_joint->extensions_count, &out_joint->extensions);
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
+static int cgltf_parse_json_physics_rigid_body_joints(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_data* out_data)
+{
+	i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(cgltf_physics_rigid_body_joint), (void**)&out_data->physics_rigid_body_joints, &out_data->physics_rigid_body_joints_count);
+	if (i < 0)
+	{
+		return i;
+	}
+
+	for (cgltf_size j = 0; j < out_data->physics_rigid_body_joints_count; ++j)
+	{
+		i = cgltf_parse_json_physics_rigid_body_joint(options, tokens, i, json_chunk, &out_data->physics_rigid_body_joints[j]);
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+	return i;
+}
+
 static int cgltf_parse_json_asset(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_asset* out_asset)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -6869,6 +7859,42 @@ static int cgltf_parse_json_root(cgltf_options* options, jsmntok_t const* tokens
 						}
 					}
 				}
+				else if (cgltf_json_strcmp(tokens+i, json_chunk, "KHR_physics_rigid_bodies") == 0)
+				{
+					++i;
+
+					CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+					int data_size = tokens[i].size;
+					++i;
+
+					for (int m = 0; m < data_size; ++m)
+					{
+						CGLTF_CHECK_KEY(tokens[i]);
+
+						if (cgltf_json_strcmp(tokens + i, json_chunk, "physicsMaterials") == 0)
+						{
+							i = cgltf_parse_json_physics_rigid_body_materials(options, tokens, i + 1, json_chunk, out_data);
+						}
+						else if (cgltf_json_strcmp(tokens + i, json_chunk, "collisionFilters") == 0)
+						{
+							i = cgltf_parse_json_physics_rigid_body_collision_filters(options, tokens, i + 1, json_chunk, out_data);
+						}
+						else if (cgltf_json_strcmp(tokens + i, json_chunk, "physicsJoints") == 0)
+						{
+							i = cgltf_parse_json_physics_rigid_body_joints(options, tokens, i + 1, json_chunk, out_data);
+						}
+						else
+						{
+							i = cgltf_skip_json(tokens, i + 1);
+						}
+
+						if (i < 0)
+						{
+							return i;
+						}
+					}
+				}
 				else
 				{
 					i = cgltf_parse_json_unprocessed_extension(options, tokens, i, json_chunk, &(out_data->data_extensions[out_data->data_extensions_count++]));
@@ -7133,6 +8159,34 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 			for (cgltf_size m = 0; m < data->nodes[i].mesh_gpu_instancing.attributes_count; ++m)
 			{
 				CGLTF_PTRFIXUP_REQ(data->nodes[i].mesh_gpu_instancing.attributes[m].data, data->accessors, data->accessors_count);
+			}
+		}
+
+		if (data->nodes[i].has_physics_rigid_body)
+		{
+			if (data->nodes[i].physics_rigid_body.has_joint)
+			{
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.joint.joint, data->physics_rigid_body_joints, data->physics_rigid_body_joints_count);
+			}
+			if (data->nodes[i].physics_rigid_body.has_collider)
+			{
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.collider.geometry.shape, data->implicit_shapes, data->implicit_shapes_count);
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.collider.geometry.node, data->nodes, data->nodes_count);
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.collider.physics_material, data->physics_rigid_body_materials, data->physics_rigid_body_materials_count);
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.collider.collision_filter, data->physics_rigid_body_collision_filters, data->physics_rigid_body_collision_filters_count);
+			}
+			if (data->nodes[i].physics_rigid_body.has_trigger)
+			{
+				if (data->nodes[i].physics_rigid_body.trigger.has_geometry)
+				{
+					CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.trigger.geometry.shape, data->implicit_shapes, data->implicit_shapes_count);
+					CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.trigger.geometry.node, data->nodes, data->nodes_count);
+				}
+				CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.trigger.collision_filter, data->physics_rigid_body_collision_filters, data->physics_rigid_body_collision_filters_count);
+				for (cgltf_size m = 0; m < data->nodes[i].physics_rigid_body.trigger.nodes_count; ++m)
+				{
+					CGLTF_PTRFIXUP(data->nodes[i].physics_rigid_body.trigger.nodes[m], data->nodes, data->nodes_count);
+				}
 			}
 		}
 	}
